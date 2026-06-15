@@ -1,0 +1,191 @@
+package com.buynow.service.impl;
+
+import com.buynow.dto.ProductDto;
+import com.buynow.dto.mapper.ProductMapper;
+import com.buynow.entity.Category;
+import com.buynow.entity.Product;
+import com.buynow.exception.ProductNotFoundException;
+import com.buynow.exception.ResourceNotFoundException;
+import com.buynow.repository.CategoryRepository;
+import com.buynow.repository.ProductRepository;
+import com.buynow.service.ProductService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+
+@Service
+@RequiredArgsConstructor
+public class ProductServiceImpl implements ProductService {
+
+    private final ProductRepository productRepository;
+    private final CategoryRepository categoryRepository;
+
+    @Value("${file.upload-dir}")
+    private  String uploadDir;
+
+    @Override
+    public ProductDto addProduct(ProductDto productDto, List<MultipartFile> images) throws IOException {
+
+        Product product = new Product();
+
+        Category category = Optional.ofNullable(categoryRepository.findByName(productDto.getCategoryName()))
+                .orElseGet(()->{
+                    Category newCategory = new Category(productDto.getCategoryName());
+                    return categoryRepository.save(newCategory);
+                });
+
+
+        product = productRepository.save(createProduct(productDto,category));
+
+
+        List<String> imagePath = new ArrayList<>();
+
+        Path uploadPath = Paths.get(uploadDir).toAbsolutePath().normalize();
+        Files.createDirectories(uploadPath);
+
+        int i=1;
+        for(MultipartFile image:images)
+        {
+            String fileName = product.getName()+"_"+product.getId()+"_"+i+image.getOriginalFilename().substring(image.getOriginalFilename().lastIndexOf("."));
+            Path filePath = uploadPath.resolve(fileName);
+            image.transferTo(filePath.toFile());
+            imagePath.add("api/product/download/image/"+fileName);
+            i++;
+
+        }
+
+        product.setProductImages(imagePath);
+        product= productRepository.save(product);
+
+        return ProductMapper.productToDto(product);
+    }
+
+    private Product createProduct(ProductDto productDto, Category category){
+        return new Product(
+                productDto.getName(),
+                productDto.getBrand(),
+                productDto.getDescription(),
+                productDto.getPrice(),
+                productDto.getStock(),
+                category
+        );
+    }
+
+    @Override
+    public Product getProductById(Long id) {
+        return productRepository.findById(id)
+                .orElseThrow(()-> new ProductNotFoundException("Product Not Found"));
+    }
+
+    @Override
+    public Product updateProduct(ProductDto productDto, Long id) {
+        return productRepository.findById(id)
+                .map(existingProduct -> updateExistingProduct(existingProduct,productDto))
+                .map(productRepository::save)
+                .orElseThrow(()->new ProductNotFoundException("Product Not Found"));
+    }
+
+    private Product updateExistingProduct(Product existingProduct, ProductDto productDto ){
+        existingProduct.setName(productDto.getName());
+        existingProduct.setBrand(productDto.getBrand());
+        existingProduct.setDescription(productDto.getDescription());
+        existingProduct.setPrice(productDto.getPrice());
+        existingProduct.setStock(productDto.getStock());
+
+        Category category = categoryRepository.findByName(productDto.getCategoryName());
+        existingProduct.setCategory(category);
+        return existingProduct;
+    }
+
+    @Override
+    public void deleteProductById(Long id) {
+        if(!productRepository.existsById(id)){
+            throw new ProductNotFoundException("Product Not Found");
+        }
+        productRepository.deleteById(id);
+    }
+
+    @Override
+    public List<Product> getAllProducts() {
+        return productRepository.findAll();
+    }
+
+    @Override
+    public List<Product> getProductByCategory(String category) {
+        return productRepository.findByCategoryName(category);
+    }
+
+    @Override
+    public List<Product> getProductByBrand(String brand) {
+        return productRepository.findByBrand(brand);
+    }
+
+    @Override
+    public List<Product> getProductByCategoryAndBrand(String category, String brand) {
+        return productRepository.findByCategoryNameAndBrand(category,brand);
+    }
+
+    @Override
+    public List<Product> getProductByName(String name) {
+        return productRepository.findByName(name);
+    }
+
+    @Override
+    public List<Product> getProductByBrandAndName(String brand, String name) {
+        return productRepository.findByBrandAndName(brand,name);
+    }
+
+    @Override
+    public Long countProductByBrandAndName(String brand, String name) {
+        return productRepository.countByBrandAndName(brand,name);
+    }
+
+    @Override
+    public ResponseEntity<Resource> getImage(String fileName) {
+
+        try
+        {
+            Path uploadPath = Paths.get(uploadDir).toAbsolutePath().normalize();
+            Path filePath = uploadPath.resolve(fileName).normalize();
+
+            if(!Files.exists(filePath))
+            {
+                throw  new ResourceNotFoundException("File Not found");
+            }
+
+            Resource resource = new UrlResource(filePath.toUri());
+            if(!resource.exists())
+            {
+                throw  new ResourceNotFoundException("File Not found");
+            }
+
+            String fileType = Files.probeContentType(filePath);
+
+            return ResponseEntity.ok()
+                    .contentType(MediaType.parseMediaType(fileType!=null?fileType:"application/octet-stream"))
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\""+fileName+"\"")
+                    .body(resource);
+        }
+        catch (IOException e)
+        {
+
+        }
+
+
+        return null;
+    }
+}
