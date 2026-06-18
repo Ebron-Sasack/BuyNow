@@ -1,5 +1,6 @@
 package com.buynow.service;
 
+import com.buynow.dto.OrderDto;
 import com.buynow.entity.Order;
 
 import java.util.List;
@@ -7,6 +8,6 @@ import java.util.List;
 public interface OrderService {
 
     Order placeOrder(Long userId);
-    Order getOrder(Long orderId);
-    List<Order> getOrdersByUserId(Long userId);
+    OrderDto getOrder(Long orderId);
+    List<OrderDto> getOrdersByUserId(Long userId);
 }

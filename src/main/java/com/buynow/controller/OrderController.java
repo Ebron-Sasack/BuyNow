@@ -1,5 +1,6 @@
 package com.buynow.controller;
 
+import com.buynow.dto.OrderDto;
 import com.buynow.response.ApiResponse;
 import com.buynow.entity.Order;
 import com.buynow.exception.ResourceNotFoundException;
@@ -31,7 +32,7 @@ public class OrderController {
     @GetMapping("/OrderId")
     public ResponseEntity<ApiResponse> getOrder(@RequestParam Long id) {
         try {
-            Order order = orderService.getOrder(id);
+            OrderDto order = orderService.getOrder(id);
             return ResponseEntity.ok(new ApiResponse("Sucess", order));
         } catch (ResourceNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ApiResponse(e.getMessage(),null));
@@ -41,7 +42,7 @@ public class OrderController {
     @GetMapping("/userId")
     public ResponseEntity<ApiResponse> getOrdersByUserId(@RequestParam Long id) {
         try {
-            List<Order> orders = orderService.getOrdersByUserId(id);
+            List<OrderDto> orders = orderService.getOrdersByUserId(id);
             return ResponseEntity.ok(new ApiResponse("Sucess", orders));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiResponse(e.getMessage(),null));
