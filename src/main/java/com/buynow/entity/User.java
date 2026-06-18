@@ -3,7 +3,6 @@ package com.buynow.entity;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.NaturalId;
-
 import java.util.ArrayList;
 import java.util.List;
 

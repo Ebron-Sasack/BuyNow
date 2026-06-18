@@ -1,11 +1,5 @@
 package com.buynow.dto;
 
-import com.buynow.entity.Order;
-import com.buynow.entity.Product;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;

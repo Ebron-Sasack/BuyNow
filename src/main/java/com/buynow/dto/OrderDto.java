@@ -1,9 +1,7 @@
 package com.buynow.dto;
 
-import com.buynow.entity.OrderItem;
 import com.buynow.entity.User;
 import com.buynow.enums.OrderStatus;
-import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
