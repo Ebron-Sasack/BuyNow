@@ -3,7 +3,6 @@ package com.buynow.entity;
 import com.buynow.enums.RoleType;
 import jakarta.persistence.*;
 import lombok.Data;
-
 import java.util.List;
 
 @Entity
