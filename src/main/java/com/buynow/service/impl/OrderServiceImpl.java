@@ -1,5 +1,6 @@
 package com.buynow.service.impl;
 
+import com.buynow.dto.OrderDto;
 import com.buynow.entity.Cart;
 import com.buynow.entity.Order;
 import com.buynow.entity.OrderItem;
@@ -26,6 +27,7 @@ public class OrderServiceImpl implements OrderService {
     private final OrderRepository orderRepository;
     private final ProductRepository productRepository;
     private final CartService cartService;
+    private final ModelMapper modelMapper;
 
     @Override
     public Order placeOrder(Long userId) {
@@ -75,14 +77,19 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public Order getOrder(Long orderId) {
-        return orderRepository.findById(orderId).orElseThrow(
+    public OrderDto getOrder(Long orderId) {
+        return orderRepository.findById(orderId).map(this::convertToDto).orElseThrow(
                 ()-> new ResourceNotFoundException("Order Not Found")
         );
     }
 
     @Override
-    public List<Order> getOrdersByUserId(Long userId) {
-        return orderRepository.findByUserId(userId);
+    public List<OrderDto> getOrdersByUserId(Long userId) {
+        List<Order> orders = orderRepository.findByUserId(userId);
+        return orders.stream().map(this::convertToDto).toList();
+    }
+
+    public OrderDto convertToDto(Order order) {
+        return modelMapper.map(order, OrderDto.class);
     }
 }
