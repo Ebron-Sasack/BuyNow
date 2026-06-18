@@ -1,9 +1,12 @@
 package com.buynow.service.impl;
 
+import com.buynow.dto.CategoryDto;
 import com.buynow.entity.Category;
 import com.buynow.exception.AlreadyExistsException;
 import com.buynow.exception.ResourceNotFoundException;
+import com.buynow.mapper.CategoryMapper;
 import com.buynow.repository.CategoryRepository;
+import com.buynow.repository.ProductRepository;
 import com.buynow.service.CategoryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -16,46 +19,60 @@ import java.util.Optional;
 public class CategoryServiceImpl implements CategoryService {
 
     private final CategoryRepository categoryRepository;
+    private final ProductRepository productRepository;
 
     @Override
-    public Category getCategoryById(Long id) {
-        return categoryRepository.findById(id)
+    public CategoryDto getCategoryById(Long id) {
+        Category category = categoryRepository.findById(id)
                 .orElseThrow(()-> new ResourceNotFoundException("Category Not Found!"));
+
+        return CategoryMapper.categoryToDto(category);
     }
 
     @Override
-    public Category getCategoryByName(String name) {
-        return categoryRepository.findByName(name);
+    public CategoryDto getCategoryByName(String name) {
+        Category category = Optional.ofNullable(categoryRepository.findByName(name)).orElseThrow(()->
+                new ResourceNotFoundException("Category Not Found"));
+        return CategoryMapper.categoryToDto(category);
     }
 
     @Override
-    public List<Category> getAllCategory() {
-        return categoryRepository.findAll();
+    public List<CategoryDto> getAllCategory() {
+        List<Category> categories = categoryRepository.findAll();
+        return categories.stream()
+                .map(CategoryMapper::categoryToDto)
+                .toList();
+
     }
 
     @Override
-    public Category addCategory(Category category) {
-        return Optional.of(category).filter(c-> !categoryRepository.existsByName(c.getName()))
+    public CategoryDto addCategory(CategoryDto categoryDto) {
+        Category addedCategory = Optional.of(categoryDto).filter(c-> !categoryRepository.existsByName(c.getName()))
+                .map(CategoryMapper::dtoToCategory)
                 .map(categoryRepository::save)
-                .orElseThrow(()-> new AlreadyExistsException(category.getName() + " Already Exists"));
+                .orElseThrow(()-> new AlreadyExistsException(categoryDto.getName() + " Already Exists"));
+        return CategoryMapper.categoryToDto(addedCategory);
     }
 
     @Override
-    public Category updateCategory(Category category, Long id) {
-        return Optional.ofNullable(getCategoryById(id))
-                .map(oldCategory -> {
-                    oldCategory.setName(category.getName());
-                    return categoryRepository.save(oldCategory);
-                })
-                .orElseThrow(()-> new ResourceNotFoundException("Category Not Found"));
+    public CategoryDto updateCategory(Long id, CategoryDto categoryDto) {
+        Category category = categoryRepository.findById(id)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Category Not Found"));
+
+        category.setName(categoryDto.getName());
+        Category updatedCategory = categoryRepository.save(category);
+        return CategoryMapper.categoryToDto(updatedCategory);
     }
 
     @Override
     public void deleteCategoryById(Long id) {
-        if(!categoryRepository.existsById(id)){
-            throw new ResourceNotFoundException("Category Not Found!");
+        Category category = categoryRepository.findById(id).orElseThrow(() ->
+                new ResourceNotFoundException("Category Not Found"));
+        if (!productRepository.findByCategoryName(category.getName()).isEmpty()) {
+            throw new IllegalStateException(
+                    "Cannot delete category because products exist in it");
         }
-
         categoryRepository.deleteById(id);
     }
 }
