@@ -1,7 +1,7 @@
 package com.buynow.service.impl;
 
 import com.buynow.dto.ProductDto;
-import com.buynow.dto.mapper.ProductMapper;
+import com.buynow.mapper.ProductMapper;
 import com.buynow.entity.Category;
 import com.buynow.entity.Product;
 import com.buynow.exception.ProductNotFoundException;
@@ -37,23 +37,21 @@ public class ProductServiceImpl implements ProductService {
     @Value("${file.upload-dir}")
     private  String uploadDir;
 
+    @Value("${api.prefix}")
+    private String apiPrefix;
+
     @Override
     public ProductDto addProduct(ProductDto productDto, List<MultipartFile> images) throws IOException {
 
         Product product = new Product();
-
         Category category = Optional.ofNullable(categoryRepository.findByName(productDto.getCategoryName()))
                 .orElseGet(()->{
                     Category newCategory = new Category(productDto.getCategoryName());
                     return categoryRepository.save(newCategory);
                 });
-
-
         product = productRepository.save(createProduct(productDto,category));
 
-
         List<String> imagePath = new ArrayList<>();
-
         Path uploadPath = Paths.get(uploadDir).toAbsolutePath().normalize();
         Files.createDirectories(uploadPath);
 
@@ -63,14 +61,12 @@ public class ProductServiceImpl implements ProductService {
             String fileName = product.getName()+"_"+product.getId()+"_"+i+image.getOriginalFilename().substring(image.getOriginalFilename().lastIndexOf("."));
             Path filePath = uploadPath.resolve(fileName);
             image.transferTo(filePath.toFile());
-            imagePath.add("api/product/download/image/"+fileName);
+            imagePath.add( apiPrefix + "/products/download/image/" + fileName);
             i++;
-
         }
 
         product.setProductImages(imagePath);
         product= productRepository.save(product);
-
         return ProductMapper.productToDto(product);
     }
 
@@ -86,20 +82,23 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public Product getProductById(Long id) {
-        return productRepository.findById(id)
+    public ProductDto getProductById(Long id) {
+        Product product = productRepository.findById(id)
                 .orElseThrow(()-> new ProductNotFoundException("Product Not Found"));
+        return ProductMapper.productToDto(product);
     }
 
     @Override
-    public Product updateProduct(ProductDto productDto, Long id) {
-        return productRepository.findById(id)
-                .map(existingProduct -> updateExistingProduct(existingProduct,productDto))
+    public ProductDto updateProduct(Long id, ProductDto productDto) {
+        Product product = productRepository.findById(id)
+                .map(existingProduct -> updateExistingProduct(existingProduct, productDto))
                 .map(productRepository::save)
                 .orElseThrow(()->new ProductNotFoundException("Product Not Found"));
+
+        return ProductMapper.productToDto(product);
     }
 
-    private Product updateExistingProduct(Product existingProduct, ProductDto productDto ){
+    private Product updateExistingProduct(Product existingProduct, ProductDto productDto){
         existingProduct.setName(productDto.getName());
         existingProduct.setBrand(productDto.getBrand());
         existingProduct.setDescription(productDto.getDescription());
@@ -120,33 +119,52 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public List<Product> getAllProducts() {
-        return productRepository.findAll();
+    public List<ProductDto> getAllProducts() {
+        List<Product> products = productRepository.findAll();
+        return products.stream()
+                .map(ProductMapper::productToDto)
+                .toList();
     }
 
     @Override
-    public List<Product> getProductByCategory(String category) {
-        return productRepository.findByCategoryName(category);
+    public List<ProductDto> getProductByCategory(String category) {
+        List<Product> products = productRepository.findByCategoryName(category);
+        return products.stream()
+                .map(ProductMapper::productToDto)
+                .toList();
+    }
+
+
+    @Override
+    public List<ProductDto> getProductByBrand(String brand) {
+        List<Product> products = productRepository.findByBrand(brand);
+        return products.stream()
+                .map(ProductMapper::productToDto)
+                .toList();
     }
 
     @Override
-    public List<Product> getProductByBrand(String brand) {
-        return productRepository.findByBrand(brand);
+    public List<ProductDto> getProductByCategoryAndBrand(String category, String brand) {
+        List<Product> products = productRepository.findByCategoryNameAndBrand(category,brand);
+        return products.stream()
+                .map(ProductMapper::productToDto)
+                .toList();
     }
 
     @Override
-    public List<Product> getProductByCategoryAndBrand(String category, String brand) {
-        return productRepository.findByCategoryNameAndBrand(category,brand);
+    public List<ProductDto> getProductByName(String name) {
+        List<Product> products = productRepository.findByName(name);
+        return products.stream()
+                .map(ProductMapper::productToDto)
+                .toList();
     }
 
     @Override
-    public List<Product> getProductByName(String name) {
-        return productRepository.findByName(name);
-    }
-
-    @Override
-    public List<Product> getProductByBrandAndName(String brand, String name) {
-        return productRepository.findByBrandAndName(brand,name);
+    public List<ProductDto> getProductByBrandAndName(String brand, String name) {
+        List<Product> products = productRepository.findByBrandAndName(brand,name);
+        return products.stream()
+                .map(ProductMapper::productToDto)
+                .toList();
     }
 
     @Override
@@ -182,10 +200,7 @@ public class ProductServiceImpl implements ProductService {
         }
         catch (IOException e)
         {
-
+            throw new RuntimeException("Error while loading image", e);
         }
-
-
-        return null;
     }
 }

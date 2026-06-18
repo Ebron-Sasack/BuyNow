@@ -1,47 +1,59 @@
 package com.buynow.service.impl;
 
+import com.buynow.request.UserRequest;
+import com.buynow.request.UserUpdateRequest;
 import com.buynow.entity.User;
+import com.buynow.exception.AlreadyExistsException;
+import com.buynow.exception.ResourceNotFoundException;
 import com.buynow.repository.UserRepository;
 import com.buynow.service.UserService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
+import java.util.Optional;
 
 @Service
+@RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
 
-    @Autowired
-    private UserRepository userRepository;
+    private final UserRepository userRepository;
 
     @Override
-    public User registerUser(User user) {
-        return userRepository.save(user);
+    public User getUserById(Long id) {
+        return userRepository.findById(id).orElseThrow(
+                ()-> new ResourceNotFoundException("User Not Found")
+        );
     }
 
     @Override
-    public ResponseEntity<User> loginUser(String userEmail, String userpassword) {
-        return null;
+    public User createUser(UserRequest userRequest) {
+        return Optional.of(userRequest).filter(user-> !userRepository.existsByEmail(userRequest.getEmail()))
+                .map(req ->{
+                    User user = new User();
+                    user.setEmail(userRequest.getEmail());
+                    user.setPassword(userRequest.getPassword());
+                    user.setFirstName(userRequest.getFirstName());
+                    user.setLastName(userRequest.getLastName());
+                    return userRepository.save(user);
+                })
+                .orElseThrow(() -> new AlreadyExistsException("Opps! "+userRequest.getEmail()+" User Already Exists"));
     }
 
     @Override
-    public ResponseEntity<User> getUserById(Long id) {
-        return null;
+    public User updateUser(Long id, UserUpdateRequest userUpdateRequest) {
+        return userRepository.findById(id).map(
+                existingUser -> {
+                    existingUser.setFirstName(userUpdateRequest.getFirstName());
+                    existingUser.setLastName(userUpdateRequest.getLastName());
+                    return userRepository.save(existingUser);
+                }).orElseThrow(() -> new ResourceNotFoundException("User Not Found"));
     }
 
     @Override
-    public List<User> getAllUsers() {
-        return List.of();
-    }
-
-    @Override
-    public ResponseEntity<User> updateUser(Long id, User user) {
-        return null;
-    }
-
-    @Override
-    public void deleteUser() {
-
+    public void deleteUser(Long id) {
+        userRepository.findById(id).ifPresentOrElse(userRepository::delete,
+                ()-> {
+                    throw new ResourceNotFoundException("User Not Found");
+                });
     }
 }
