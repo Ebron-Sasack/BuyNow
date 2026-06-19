@@ -26,7 +26,7 @@ public class Order {
     private OrderStatus orderStatus;
 
     @ManyToOne
-    @JoinColumn(name = "user")
+    @JoinColumn(name = "user_id")
     private User user;
 
     @OneToMany(mappedBy = "order",cascade = CascadeType.ALL, orphanRemoval = true)

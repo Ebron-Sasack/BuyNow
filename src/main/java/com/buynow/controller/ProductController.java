@@ -1,6 +1,7 @@
 package com.buynow.controller;
 
 import com.buynow.dto.ProductDto;
+import com.buynow.exception.AlreadyExistsException;
 import com.buynow.exception.ProductNotFoundException;
 import com.buynow.response.ApiResponse;
 import com.buynow.service.ProductService;
@@ -13,8 +14,7 @@ import tools.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.util.List;
 
-import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
-import static org.springframework.http.HttpStatus.NOT_FOUND;
+import static org.springframework.http.HttpStatus.*;
 
 @RestController
 @RequestMapping("${api.prefix}/products")
@@ -26,8 +26,12 @@ public class ProductController {
     @PostMapping("/add")
     public ResponseEntity<ApiResponse> createProduct(@RequestParam("product") String productJson, @RequestParam("images") List<MultipartFile> images) throws IOException {
         ProductDto productDto = new ObjectMapper().readValue(productJson, ProductDto.class);
-        ProductDto savedProductDto = productService.addProduct(productDto,images);
-       return ResponseEntity.ok(new ApiResponse("Sucess", savedProductDto));
+        try {
+            ProductDto savedProductDto = productService.addProduct(productDto,images);
+            return ResponseEntity.ok(new ApiResponse("Sucess", savedProductDto));
+        } catch (AlreadyExistsException e) {
+            return ResponseEntity.status(CONFLICT).body(new ApiResponse(e.getMessage(),null));
+        }
     }
 
     @GetMapping("/id")

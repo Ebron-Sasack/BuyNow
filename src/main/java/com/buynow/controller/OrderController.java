@@ -5,6 +5,7 @@ import com.buynow.response.ApiResponse;
 import com.buynow.entity.Order;
 import com.buynow.exception.ResourceNotFoundException;
 import com.buynow.service.OrderService;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -14,6 +15,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("${api.prefix}/orders")
+@Transactional
 @RequiredArgsConstructor
 public class OrderController {
 
@@ -23,7 +25,8 @@ public class OrderController {
     public ResponseEntity<ApiResponse> placeOrder(@RequestParam Long id) {
         try {
             Order order = orderService.placeOrder(id);
-            return ResponseEntity.ok(new ApiResponse("Order Placed", order));
+            OrderDto orderDto = orderService.convertToDto(order);
+            return ResponseEntity.ok(new ApiResponse("Order Placed", orderDto));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiResponse("Order Failed", e.getMessage()));
         }

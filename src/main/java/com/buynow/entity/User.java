@@ -1,5 +1,6 @@
 package com.buynow.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.NaturalId;
@@ -31,9 +32,11 @@ public class User {
     @OneToMany(mappedBy = "user",cascade = CascadeType.ALL,orphanRemoval = true)
     private List<Address> addresses = new ArrayList<>();
 
+    @JsonIgnore
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private Cart cart;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "user")
     private List<Order> orders = new ArrayList<>();
 

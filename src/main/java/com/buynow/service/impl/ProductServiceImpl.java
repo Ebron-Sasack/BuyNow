@@ -1,6 +1,7 @@
 package com.buynow.service.impl;
 
 import com.buynow.dto.ProductDto;
+import com.buynow.exception.AlreadyExistsException;
 import com.buynow.mapper.ProductMapper;
 import com.buynow.entity.Category;
 import com.buynow.entity.Product;
@@ -43,6 +44,9 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public ProductDto addProduct(ProductDto productDto, List<MultipartFile> images) throws IOException {
 
+        if(productExists(productDto.getName(),productDto.getBrand())){
+            throw new AlreadyExistsException(productDto.getName() + " " + productDto.getBrand() + " already exists. you may update the product instead!");
+        }
         Product product = new Product();
         Category category = Optional.ofNullable(categoryRepository.findByName(productDto.getCategoryName()))
                 .orElseGet(()->{
@@ -68,6 +72,10 @@ public class ProductServiceImpl implements ProductService {
         product.setProductImages(imagePath);
         product= productRepository.save(product);
         return ProductMapper.productToDto(product);
+    }
+
+    private boolean productExists(String name, String brand) {
+        return productRepository.existsByNameAndBrand(name,brand);
     }
 
     private Product createProduct(ProductDto productDto, Category category){

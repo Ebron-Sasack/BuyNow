@@ -1,6 +1,7 @@
 package com.buynow.service.impl;
 
 import com.buynow.entity.Cart;
+import com.buynow.entity.User;
 import com.buynow.exception.ResourceNotFoundException;
 import com.buynow.repository.CartItemRepository;
 import com.buynow.repository.CartRepository;
@@ -9,7 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -42,10 +43,13 @@ public class CartServiceImpl implements CartService {
     }
 
     @Override
-    public Long initializeNewCart(){
-        Cart newCart = new Cart();
-        Cart savedCart = cartRepository.save(newCart);
-        return savedCart.getId();
+    public Cart initializeNewCart(User user){
+        return Optional.ofNullable(getCartByUserId(user.getId()))
+                .orElseGet(() -> {
+                    Cart cart = new Cart();
+                    cart.setUser(user);
+                    return cartRepository.save(cart);
+                });
     }
 
     @Override
