@@ -1,5 +1,6 @@
 package com.buynow.service.impl;
 
+import com.buynow.dto.UserDto;
 import com.buynow.request.UserRequest;
 import com.buynow.request.UserUpdateRequest;
 import com.buynow.entity.User;
@@ -8,6 +9,7 @@ import com.buynow.exception.ResourceNotFoundException;
 import com.buynow.repository.UserRepository;
 import com.buynow.service.UserService;
 import lombok.RequiredArgsConstructor;
+import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
@@ -17,6 +19,7 @@ import java.util.Optional;
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
+    private final ModelMapper modelMapper;
 
     @Override
     public User getUserById(Long id) {
@@ -55,5 +58,10 @@ public class UserServiceImpl implements UserService {
                 ()-> {
                     throw new ResourceNotFoundException("User Not Found");
                 });
+    }
+
+    @Override
+    public UserDto convertUserToDto(User user) {
+        return modelMapper.map(user, UserDto.class);
     }
 }
