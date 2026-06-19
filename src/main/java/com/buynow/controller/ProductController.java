@@ -2,7 +2,7 @@ package com.buynow.controller;
 
 import com.buynow.dto.ProductDto;
 import com.buynow.exception.AlreadyExistsException;
-import com.buynow.exception.ProductNotFoundException;
+import com.buynow.exception.ResourceNotFoundException;
 import com.buynow.response.ApiResponse;
 import com.buynow.service.ProductService;
 import lombok.RequiredArgsConstructor;
@@ -39,7 +39,7 @@ public class ProductController {
         try {
             ProductDto productDto = productService.getProductById(id);
             return ResponseEntity.ok(new ApiResponse("Sucess", productDto));
-        } catch (ProductNotFoundException e) {
+        } catch (ResourceNotFoundException e) {
             return ResponseEntity.status(NOT_FOUND).body(new ApiResponse(e.getMessage(),null));
         }
     }
@@ -49,7 +49,7 @@ public class ProductController {
         try {
             ProductDto updatedProductDto = productService.updateProduct(id, productDto);
             return ResponseEntity.ok(new ApiResponse("Sucess", updatedProductDto));
-        } catch (ProductNotFoundException e) {
+        } catch (ResourceNotFoundException e) {
             return ResponseEntity.status(NOT_FOUND).body(new ApiResponse(e.getMessage(),null));
         }
     }
@@ -59,7 +59,7 @@ public class ProductController {
         try {
             productService.deleteProductById(id);
             return ResponseEntity.ok(new ApiResponse("Sucess",null));
-        } catch (ProductNotFoundException e) {
+        } catch (ResourceNotFoundException e) {
             return ResponseEntity.status(NOT_FOUND).body(new ApiResponse(e.getMessage(),null));
         }
     }
