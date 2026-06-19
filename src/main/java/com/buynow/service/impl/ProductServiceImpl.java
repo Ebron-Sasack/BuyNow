@@ -5,7 +5,6 @@ import com.buynow.exception.AlreadyExistsException;
 import com.buynow.mapper.ProductMapper;
 import com.buynow.entity.Category;
 import com.buynow.entity.Product;
-import com.buynow.exception.ProductNotFoundException;
 import com.buynow.exception.ResourceNotFoundException;
 import com.buynow.repository.CategoryRepository;
 import com.buynow.repository.ProductRepository;
@@ -92,7 +91,7 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public ProductDto getProductById(Long id) {
         Product product = productRepository.findById(id)
-                .orElseThrow(()-> new ProductNotFoundException("Product Not Found"));
+                .orElseThrow(()-> new ResourceNotFoundException("Product Not Found"));
         return ProductMapper.productToDto(product);
     }
 
@@ -101,7 +100,7 @@ public class ProductServiceImpl implements ProductService {
         Product product = productRepository.findById(id)
                 .map(existingProduct -> updateExistingProduct(existingProduct, productDto))
                 .map(productRepository::save)
-                .orElseThrow(()->new ProductNotFoundException("Product Not Found"));
+                .orElseThrow(()->new ResourceNotFoundException("Product Not Found"));
 
         return ProductMapper.productToDto(product);
     }
@@ -121,7 +120,7 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public void deleteProductById(Long id) {
         if(!productRepository.existsById(id)){
-            throw new ProductNotFoundException("Product Not Found");
+            throw new ResourceNotFoundException("Product Not Found");
         }
         productRepository.deleteById(id);
     }
