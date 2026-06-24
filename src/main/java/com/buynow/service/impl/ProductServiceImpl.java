@@ -119,15 +119,17 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public void deleteProductById(Long id) {
-        if(!productRepository.existsById(id)){
+        productRepository.findById(id).ifPresentOrElse(productRepository::delete, ()->{
             throw new ResourceNotFoundException("Product Not Found");
-        }
-        productRepository.deleteById(id);
+        });
     }
 
     @Override
     public List<ProductDto> getAllProducts() {
-        List<Product> products = productRepository.findAll();
+        List<Product> products = Optional.of(productRepository.findAll())
+                .orElseThrow(
+                        ()-> new ResourceNotFoundException("No products found")
+                );
         return products.stream()
                 .map(ProductMapper::productToDto)
                 .toList();
@@ -135,7 +137,10 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public List<ProductDto> getProductByCategory(String category) {
-        List<Product> products = productRepository.findByCategoryName(category);
+        List<Product> products = Optional.ofNullable(productRepository.findByCategoryName(category))
+                .orElseThrow(
+                        ()-> new ResourceNotFoundException("No products found for category: " + category)
+                );
         return products.stream()
                 .map(ProductMapper::productToDto)
                 .toList();
@@ -144,7 +149,10 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public List<ProductDto> getProductByBrand(String brand) {
-        List<Product> products = productRepository.findByBrand(brand);
+        List<Product> products = Optional.ofNullable(productRepository.findByBrand(brand))
+                .orElseThrow(
+                        ()->  new ResourceNotFoundException("No products found for brand: " + brand)
+                );
         return products.stream()
                 .map(ProductMapper::productToDto)
                 .toList();
@@ -152,7 +160,10 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public List<ProductDto> getProductByCategoryAndBrand(String category, String brand) {
-        List<Product> products = productRepository.findByCategoryNameAndBrand(category,brand);
+        List<Product> products = Optional.ofNullable(productRepository.findByCategoryNameAndBrand(category,brand))
+                .orElseThrow(
+                ()-> new ResourceNotFoundException("Product Not Found")
+        );
         return products.stream()
                 .map(ProductMapper::productToDto)
                 .toList();
@@ -160,7 +171,9 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public List<ProductDto> getProductByName(String name) {
-        List<Product> products = productRepository.findByName(name);
+        List<Product> products = Optional.ofNullable(productRepository.findByName(name)).orElseThrow(
+                ()-> new ResourceNotFoundException("No products found for name: " + name)
+        );
         return products.stream()
                 .map(ProductMapper::productToDto)
                 .toList();
@@ -168,7 +181,10 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public List<ProductDto> getProductByBrandAndName(String brand, String name) {
-        List<Product> products = productRepository.findByBrandAndName(brand,name);
+        List<Product> products = Optional.ofNullable(productRepository.findByBrandAndName(brand,name))
+                .orElseThrow(
+                        ()-> new ResourceNotFoundException("Product Not Found")
+                );
         return products.stream()
                 .map(ProductMapper::productToDto)
                 .toList();

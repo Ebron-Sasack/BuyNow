@@ -1,4 +1,4 @@
-package com.buynow.response;
+package com.buynow.payload;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
