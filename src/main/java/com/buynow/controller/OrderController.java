@@ -1,13 +1,11 @@
 package com.buynow.controller;
 
 import com.buynow.dto.OrderDto;
-import com.buynow.response.ApiResponse;
+import com.buynow.payload.ApiResponse;
 import com.buynow.entity.Order;
-import com.buynow.exception.ResourceNotFoundException;
 import com.buynow.service.OrderService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -23,33 +21,20 @@ public class OrderController {
 
     @PostMapping("/order")
     public ResponseEntity<ApiResponse> placeOrder(@RequestParam Long id) {
-        try {
             Order order = orderService.placeOrder(id);
             OrderDto orderDto = orderService.convertToDto(order);
             return ResponseEntity.ok(new ApiResponse("Order Placed", orderDto));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiResponse("Order Failed", e.getMessage()));
-        }
     }
 
     @GetMapping("/OrderId")
     public ResponseEntity<ApiResponse> getOrder(@RequestParam Long id) {
-        try {
             OrderDto order = orderService.getOrder(id);
             return ResponseEntity.ok(new ApiResponse("Sucess", order));
-        } catch (ResourceNotFoundException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ApiResponse(e.getMessage(),null));
-        }
     }
 
     @GetMapping("/userId")
     public ResponseEntity<ApiResponse> getOrdersByUserId(@RequestParam Long id) {
-        try {
             List<OrderDto> orders = orderService.getOrdersByUserId(id);
             return ResponseEntity.ok(new ApiResponse("Sucess", orders));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiResponse(e.getMessage(),null));
-        }
-
     }
 }
