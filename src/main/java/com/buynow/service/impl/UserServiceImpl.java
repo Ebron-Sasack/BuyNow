@@ -14,6 +14,9 @@ import com.buynow.repository.UserRepository;
 import com.buynow.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -24,6 +27,8 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
+    private final AuthenticationManager authManager;
+    private final JwtService jwtService;
     private final ModelMapper modelMapper;
 
     @Override
@@ -56,20 +61,14 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public UserDto loginUser(UserLoginRequest request) {
+    public String loginUser(UserLoginRequest request) {
 
-        User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() ->
-                        new ResourceNotFoundException("Invalid Email or Password"));
-
-        if (!passwordEncoder.matches(
-                request.getPassword(),
-                user.getPassword())) {
-
-            throw new RuntimeException("Invalid Email or Password");
+        Authentication authentication = authManager.authenticate(
+                        new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
+        if(authentication.isAuthenticated()) {
+            return jwtService.generateToken(request.getEmail());
         }
-
-        return convertUserToDto(user);
+        return "Failure";
     }
 
     @Override

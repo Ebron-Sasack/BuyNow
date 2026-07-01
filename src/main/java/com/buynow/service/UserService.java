@@ -11,7 +11,7 @@ public interface UserService {
     User getUserById(Long id);
     User createUser(UserRequest userRequest);
 
-    UserDto loginUser(UserLoginRequest request);
+    String loginUser(UserLoginRequest request);
 
     User updateUser(Long id, UserUpdateRequest userUpdateRequest);
     void deleteUser(Long id);

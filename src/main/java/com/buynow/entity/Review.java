@@ -1,9 +1,13 @@
 package com.buynow.entity;
 
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
 
 @Entity
 @Table(name = "reviews")
+@Getter
+@Setter
 public class Review {
 
     @Id
