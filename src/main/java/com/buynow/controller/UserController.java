@@ -34,7 +34,7 @@ public class UserController {
 
     @PostMapping("/login")
     public ResponseEntity<ApiResponse> loginUser(@RequestBody UserLoginRequest  request) {
-        UserDto userDto = userService.loginUser(request);
+        String userDto = userService.loginUser(request);
         return ResponseEntity.ok(new ApiResponse("User Login Sucess", userDto));
     }
 
